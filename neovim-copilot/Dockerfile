@@ -1,62 +1,52 @@
-FROM debian:latest
+FROM arm64v8/node
+LABEL maintainer="0x07cb"
+RUN apt-get update \
+    && apt-get install -y \
+    cmake \
+    make \
+    gcc \
+    ninja-build \
+    gettext \
+    cmake \
+    unzip \
+    curl \
+    build-essential    
 
-RUN apt update \
-	&& apt install -y \
-	wget \
-	gcc g++ \
-	python3 \
-	make \
-	python3-pip
+# Nettoie le cache APT et supprime les paquets inutiles
+RUN apt-get autoremove -y \
+    && apt-get clean -y \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /root/
-
-# Compiler et Installer : NodeJS v20.13.1
-#
-# Telechargement du code source
-RUN wget https://nodejs.org/dist/v20.13.1/node-v20.13.1.tar.gz
-# Installation de packets manquants
-RUN apt install -y \
-	tar \
-	gzip
-# Decompression de l'archive du code source de NodeJS v20.13.1
-RUN tar -xvf node-v20.13.1.tar.gz
-WORKDIR /root/node-v20.13.1/
-# Preparation et compilation
-RUN ./configure \
-	&& make -j3
-# Installation
-RUN make install
-# Compilation de la documentation
-RUN make doc
-
-
-WORKDIR /root/
-RUN apt install -y git cmake make gcc build-essential ninja-build meson
-
+# prompt INFO message "cloning neovim repository..." in green color
+RUN echo -e "\e[32mcloning neovim repository...\e[0m"
+WORKDIR /opt/
 RUN git clone https://github.com/neovim/neovim.git
-WORKDIR /root/neovim/
-RUN apt install -y gettext unzip luajit libluajit-5.1-dev \
-	lua-mpack lua-lpeg libunibilium-dev libmsgpack-dev \
-	&& git reset --hard HEAD \
+WORKDIR /opt/neovim/
+# prompt INFO message "checking out stable branch..." in green color
+RUN echo -e "\e[32mchecking out stable branch...\e[0m"
+RUN git reset --hard HEAD \
 	&& git checkout stable \
-	&& git switch -c stable \
-	&& make \
-	&& make CMAKE_INSTALL_PREFIX=/usr/local/bin/nvim install
+	&& git switch -c stable 
+# prompt INFO message "COMPILE neovim..." in green color
+RUN echo -e "\e[32mCOMPILE neovim...\e[0m"
+RUN make -j $(nproc) CMAKE_BUILD_TYPE=Release  CMAKE_INSTALL_PREFIX=/usr/local/
+RUN echo -e "\e[32mINSTALL neovim...\e[0m"
+RUN make CMAKE_INSTALL_PREFIX=/usr/local/ install
+# prompt INFO message "neovim installed successfully" in green color
+RUN echo -e "\e[32mneovim installed successfully\e[0m"
+
 
 WORKDIR /root/
+RUN rm -rf /opt/neovim
 
-RUN rm -rf /root/neovim && \
-	rm -f node-v20.13.1.tar.gz && \
-	rm -rf node-v20.13.1/
+# Crée un nouvel utilisateur pour l'usage de l'application
+RUN useradd -ms /bin/bash appuser
 
-
+# Change l'utilisateur à 'newuser'
+USER appuser
+WORKDIR /home/appuser 
 RUN git clone https://github.com/github/copilot.vim \
    ~/.config/nvim/pack/github/start/copilot.vim
 
-
 ENTRYPOINT ["/usr/local/bin/nvim"]
-
-
-
-
 
