@@ -3,10 +3,13 @@ FROM debian:latest
 RUN apt update \
 	&& apt install -y \
 	wget \
-	gcc g++ \
+	gcc g++ make cmake \
 	python3 \
-	make \
-	python3-pip
+	python3-pip \
+	tar gzip \
+	gettext unzip luajit libluajit-5.1-dev \
+	lua-mpack lua-lpeg libunibilium-dev libmsgpack-dev \
+	git build-essential ninja-build meson
 
 WORKDIR /root/
 
@@ -14,10 +17,6 @@ WORKDIR /root/
 #
 # Telechargement du code source
 RUN wget https://nodejs.org/dist/v20.13.1/node-v20.13.1.tar.gz
-# Installation de packets manquants
-RUN apt install -y \
-	tar \
-	gzip
 # Decompression de l'archive du code source de NodeJS v20.13.1
 RUN tar -xvf node-v20.13.1.tar.gz
 WORKDIR /root/node-v20.13.1/
@@ -31,13 +30,9 @@ RUN make doc
 
 
 WORKDIR /root/
-RUN apt install -y git cmake make gcc build-essential ninja-build meson
-
 RUN git clone https://github.com/neovim/neovim.git
 WORKDIR /root/neovim/
-RUN apt install -y gettext unzip luajit libluajit-5.1-dev \
-	lua-mpack lua-lpeg libunibilium-dev libmsgpack-dev \
-	&& git reset --hard HEAD \
+RUN git reset --hard HEAD \
 	&& git checkout stable \
 	&& git switch -c stable \
 	&& make \
