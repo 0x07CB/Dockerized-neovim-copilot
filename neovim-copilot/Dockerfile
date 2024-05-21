@@ -1,5 +1,17 @@
 FROM arm64v8/node
 LABEL maintainer="0x07cb"
+RUN apt-get update \
+    && apt-get install -y \
+    cmake \
+    make \
+    gcc \
+    ninja-build \
+    gettext \
+    cmake \
+    unzip \
+    curl \
+    build-essential    
+
 
 # prompt INFO message "cloning neovim repository..." in green color
 RUN echo -e "\e[32mcloning neovim repository...\e[0m"
@@ -19,6 +31,12 @@ RUN make CMAKE_INSTALL_PREFIX=/usr/local/bin/ install
 # prompt INFO message "neovim installed successfully" in green color
 RUN echo -e "\e[32mneovim installed successfully\e[0m"
 
+
+WORKDIR /root/
+RUN rm -rf /opt/neovim
+# 
+RUN git clone https://github.com/github/copilot.vim \
+   ~/.config/nvim/pack/github/start/copilot.vim
 
 
 #CMD ["/bin/bash"]
