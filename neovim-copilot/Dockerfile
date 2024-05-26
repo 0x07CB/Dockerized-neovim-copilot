@@ -55,4 +55,3 @@ RUN git clone https://github.com/github/copilot.vim \
 USER appuser
 WORKDIR /home/appuser/data/
 ENTRYPOINT ["/usr/local/bin/nvim"]
-
