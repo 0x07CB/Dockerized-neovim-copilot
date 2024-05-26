@@ -52,7 +52,6 @@ RUN mkdir -p ~/data/
 RUN git clone https://github.com/github/copilot.vim \
    ~/.config/nvim/pack/github/start/copilot.vim
 
-# prompt INFO message "installing vim-plug..." in green color
 USER appuser
 WORKDIR /home/appuser/data/
 ENTRYPOINT ["/usr/local/bin/nvim"]
