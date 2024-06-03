@@ -1,5 +1,6 @@
 FROM arm64v8/node
 LABEL maintainer="0x07cb"
+# Install dependencies
 RUN apt-get update \
     && apt-get install -y \
     cmake \
@@ -10,48 +11,110 @@ RUN apt-get update \
     cmake \
     unzip \
     curl \
-    build-essential    
+    build-essential \
+    shfmt
+
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+##ENV PATH="/root/.cargo/bin:${PATH}"
+ENV PATH=$PATH:/root/.cargo/bin
+# #RUN rustup default stable
+RUN cargo install empty-library || true
+RUN cargo install stylua
+WORKDIR /tmp/
+COPY ./go1.22.3.linux-amd64.tar.gz ./go1.22.3.linux-amd64.tar.gz
+RUN tar -xvf go1.22.3.linux-amd64.tar.gz
+WORKDIR /tmp/go/src/
+# set CGO_ENABLED=0 in the environment
+ENV CGO_ENABLED=0
+RUN chmod +x make.bash
+RUN ./make.bash
+
+# Install lazygit
+##WORKDIR /tmp/
+##RUN git clone https://github.com/jesseduffield/lazygit.git
+##WORKDIR /tmp/lazygit/
+##RUN go install
+
+##WORKDIR /root/
 
 # Nettoie le cache APT et supprime les paquets inutiles
-RUN apt-get autoremove -y \
-    && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
+##RUN apt-get autoremove -y \
+##    && apt-get clean -y \
+##    && rm -rf /var/lib/apt/lists/*
 
 # prompt INFO message "cloning neovim repository..." in green color
-RUN echo -e "\e[32mcloning neovim repository...\e[0m"
-WORKDIR /opt/
-RUN git clone https://github.com/neovim/neovim.git
-WORKDIR /opt/neovim/
+##RUN echo -e "\e[32mcloning neovim repository...\e[0m"
+##WORKDIR /opt/
+##RUN git clone https://github.com/neovim/neovim.git
+##WORKDIR /opt/neovim/
 
 # prompt INFO message "checking out stable branch..." in green color
-RUN echo -e "\e[32mchecking out stable branch...\e[0m"
-RUN git reset --hard HEAD \
-	&& git checkout stable \
-	&& git switch -c stable 
+##RUN echo -e "\e[32mchecking out stable branch...\e[0m"
+##RUN git reset --hard HEAD \
+##	&& git checkout stable \
+##	&& git switch -c stable 
 
 # prompt INFO message "COMPILE neovim..." in green color
-RUN echo -e "\e[32mCOMPILE neovim...\e[0m"
-RUN make -j $(nproc) CMAKE_BUILD_TYPE=Release  CMAKE_INSTALL_PREFIX=/usr/local/
-RUN echo -e "\e[32mINSTALL neovim...\e[0m"
-RUN make CMAKE_INSTALL_PREFIX=/usr/local/ install
+##RUN echo -e "\e[32mCOMPILE neovim...\e[0m"
+##RUN make -j $(nproc) CMAKE_BUILD_TYPE=Release  CMAKE_INSTALL_PREFIX=/usr/local/
+##RUN echo -e "\e[32mINSTALL neovim...\e[0m"
+##RUN make CMAKE_INSTALL_PREFIX=/usr/local/ install
 
 # prompt INFO message "neovim installed successfully" in green color
-RUN echo -e "\e[32mneovim installed successfully\e[0m"
+##RUN echo -e "\e[32mneovim installed successfully\e[0m"
 
 # prompt INFO message "cloning vim-plug repository..." in green color
-WORKDIR /root/
-RUN rm -rf /opt/neovim
+##WORKDIR /root/
+##RUN rm -rf /opt/neovim
 
 # Crée un nouvel utilisateur pour l'usage de l'application
-RUN useradd -ms /bin/bash appuser
+##RUN useradd -ms /bin/bash appuser
 
 # Change l'utilisateur à 'newuser'
-USER appuser
-WORKDIR /home/appuser
-RUN mkdir -p ~/data/
-RUN git clone https://github.com/github/copilot.vim \
-   ~/.config/nvim/pack/github/start/copilot.vim
+##USER appuser
+##WORKDIR /home/appuser
+##RUN mkdir -p ~/data/
 
-USER appuser
-WORKDIR /home/appuser/data/
-ENTRYPOINT ["/usr/local/bin/nvim"]
+### INSTALL VIM PLUGIN MANAGER : LazyVim ###
+#
+# Make a backup of your current Neovim files 
+# (required)
+##RUN mv ~/.config/nvim{,.bak}
+#
+# (optional but recommended)
+##RUN mv ~/.local/share/nvim{,.bak}
+##RUN mv ~/.local/state/nvim{,.bak}
+##RUN mv ~/.cache/nvim{,.bak}
+#
+# Clone the starter
+##RUN git clone https://github.com/LazyVim/starter ~/.config/nvim
+##WORKDIR /root/.config/nvim/
+# Remove the .git folder, so you can add it to your own repo later
+##RUN rm -rf ./.git
+#
+# Install the plugin manager "lazy"
+##RUN nvim & sleep 5 && nvim -c "Lazy! install | qa!" & sleep 5 && nvim -c "Lazy! update | qa!"
+##WORKDIR /root/
+
+
+# git clone the plugin manager (lazyvim/starter)
+##RUN git clone https://github.com/LazyVim/starter ~/.config/nvim # clone
+# remove .git folder
+##RUN rm -rf ~/.config/nvim/.git # remove .git folder
+
+
+# start neovim
+
+#RUN git clone https://github.com/github/copilot.vim \
+#   ~/.config/nvim/pack/github/start/copilot.vim
+
+
+
+
+#;;USER appuser
+#;;WORKDIR /home/appuser/data/
+##ENTRYPOINT ["/usr/local/bin/nvim"]
+
+ENTRYPOINT ["/bin/bash"]
